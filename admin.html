@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metalife — Admin</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #18181f;
+    --border: rgba(255,255,255,0.08);
+    --gold: #c9a84c;
+    --gold2: #e8c97a;
+    --text: #e8e4dc;
+    --text-dim: #8a8580;
+    --api: #f87171;
+    --kayu: #4ade80;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; font-size:15px; line-height:1.6; }
+
+  .wrap { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
+
+  h1 { font-size: 24px; color: var(--gold); margin-bottom: 4px; }
+  .subtitle { color: var(--text-dim); font-size: 14px; margin-bottom: 32px; }
+
+  /* LOGIN */
+  #login-section { max-width: 360px; margin: 80px auto; }
+  #login-section h2 { color: var(--gold); font-size: 18px; margin-bottom: 20px; text-align:center; }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .card::before {
+    content:'';
+    position:absolute;
+    top:0;left:0;right:0;
+    height:2px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+    border-radius:16px 16px 0 0;
+  }
+  .card h3 { font-size:15px; color:var(--gold); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:16px; }
+
+  label { display:block; font-size:12px; color:var(--text-dim); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px; }
+  input[type=number], input[type=text], input[type=password] {
+    width:100%;
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:12px 14px;
+    color:var(--text);
+    font-size:15px;
+    outline:none;
+    margin-bottom:16px;
+    transition: border-color 0.2s;
+  }
+  input:focus { border-color: var(--gold); }
+
+  .btn {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:linear-gradient(135deg,var(--gold),var(--gold2));
+    color:#0a0a0f;
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    padding:12px 28px;
+    border-radius:8px;
+    border:none;
+    cursor:pointer;
+    transition:transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 0 20px rgba(201,168,76,0.2);
+  }
+  .btn:hover { transform:translateY(-1px); box-shadow:0 6px 30px rgba(201,168,76,0.4); }
+  .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+  .btn-outline {
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text-dim);
+    box-shadow:none;
+  }
+  .btn-outline:hover { border-color:var(--gold); color:var(--gold); box-shadow:none; }
+
+  .btn-row { display:flex; gap:10px; flex-wrap:wrap; }
+
+  /* TABLE */
+  .table-wrap { border:1px solid var(--border); border-radius:10px; overflow:hidden; margin-top:16px; }
+  table { width:100%; border-collapse:collapse; }
+  thead tr { background:var(--surface2); }
+  th { padding:12px 14px; text-align:left; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); font-weight:500; }
+  td { padding:12px 14px; border-top:1px solid var(--border); font-size:13px; vertical-align:middle; }
+  tr:hover td { background:rgba(255,255,255,0.02); }
+
+  .badge-ok { display:inline-block; padding:2px 10px; border-radius:100px; font-size:11px; background:rgba(74,222,128,0.1); color:var(--kayu); border:1px solid rgba(74,222,128,0.3); }
+  .badge-used { display:inline-block; padding:2px 10px; border-radius:100px; font-size:11px; background:rgba(248,113,113,0.1); color:var(--api); border:1px solid rgba(248,113,113,0.3); }
+  .badge-partial { display:inline-block; padding:2px 10px; border-radius:100px; font-size:11px; background:rgba(245,208,0,0.1); color:#f5d000; border:1px solid rgba(245,208,0,0.3); }
+
+  .code-text { font-family:monospace; font-size:13px; color:var(--gold); }
+
+  .msg { padding:10px 14px; border-radius:8px; font-size:13px; margin-bottom:16px; }
+  .msg-ok { background:rgba(74,222,128,0.08); border:1px solid rgba(74,222,128,0.2); color:var(--kayu); }
+  .msg-err { background:rgba(248,113,113,0.08); border:1px solid rgba(248,113,113,0.2); color:var(--api); }
+
+  #stats { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
+  .stat-box { flex:1; min-width:120px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px; text-align:center; }
+  .stat-num { font-size:28px; font-weight:700; color:var(--gold); }
+  .stat-label { font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.1em; margin-top:4px; }
+
+  /* QR print area */
+  #qr-print-area { display:none; }
+  .qr-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:16px; margin-top:16px; }
+  .qr-item { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px; text-align:center; }
+  .qr-item canvas, .qr-item img { display:block; margin:0 auto 8px; }
+  .qr-code-label { font-size:10px; color:var(--text-dim); font-family:monospace; word-break:break-all; }
+
+  @media print {
+    body { background:#fff; }
+    .no-print { display:none !important; }
+    #qr-print-area { display:block !important; }
+    .qr-item { border:1px solid #ddd; background:#fff; }
+    .qr-code-label { color:#333; }
+  }
+
+  .spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(0,0,0,0.3); border-top-color:#0a0a0f; border-radius:50%; animation:spin 0.6s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  #main-section { display:none; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-section" class="wrap">
+  <h2>🔐 Admin Metalife</h2>
+  <div class="card">
+    <label>Password Admin</label>
+    <input type="password" id="admin-pwd" placeholder="Masukkan password..." onkeydown="if(event.key==='Enter')adminLogin()"/>
+    <div id="login-err" class="msg msg-err" style="display:none"></div>
+    <button class="btn" onclick="adminLogin()">Masuk</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main-section" class="wrap">
+  <h1>⚙ Admin Panel</h1>
+  <p class="subtitle">Metalife — Pengurusan Kod Buku</p>
+
+  <!-- STATS -->
+  <div id="stats">
+    <div class="stat-box"><div class="stat-num" id="stat-total">—</div><div class="stat-label">Jumlah Kod</div></div>
+    <div class="stat-box"><div class="stat-num" id="stat-active">—</div><div class="stat-label">Masih Aktif</div></div>
+    <div class="stat-box"><div class="stat-num" id="stat-used">—</div><div class="stat-label">Dah Habis</div></div>
+  </div>
+
+  <!-- GENERATE -->
+  <div class="card no-print">
+    <h3>Generate Kod Baru</h3>
+    <label>Berapa kod nak generate?</label>
+    <input type="number" id="gen-count" value="10" min="1" max="500" style="max-width:200px"/>
+    <div id="gen-msg"></div>
+    <div class="btn-row">
+      <button class="btn" id="btn-generate" onclick="generateCodes()">✦ Generate</button>
+    </div>
+  </div>
+
+  <!-- CODE LIST -->
+  <div class="card no-print">
+    <h3>Senarai Kod</h3>
+    <div class="btn-row" style="margin-bottom:16px;">
+      <button class="btn btn-outline" onclick="loadCodes()">↺ Refresh</button>
+      <button class="btn btn-outline" onclick="showQRAll()">🖨 Print QR Semua</button>
+      <button class="btn btn-outline" onclick="exportCSV()">📥 Export CSV</button>
+    </div>
+    <div id="list-msg"></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Kod</th><th>Link</th><th>Guna</th><th>Status</th><th>Tindakan</th></tr></thead>
+        <tbody id="code-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- QR PRINT -->
+  <div id="qr-print-area">
+    <h2 style="color:#000;margin-bottom:16px;">QR Codes — Metalife</h2>
+    <div class="qr-grid" id="qr-grid"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://kymucmbrgsbhkidrdugo.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_CAlbvBeGnv-GyJ-P3rE8oQ_rZ5_rfzg';
+const ADMIN_PASSWORD = 'elemen123';
+const CALCULATOR_URL = window.location.href.replace('admin.html','index2.html');
+
+// ── LOGIN ──
+function adminLogin() {
+  const pwd = document.getElementById('admin-pwd').value;
+  if (pwd === ADMIN_PASSWORD) {
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('main-section').style.display = 'block';
+    loadCodes();
+  } else {
+    const err = document.getElementById('login-err');
+    err.textContent = 'Password salah.';
+    err.style.display = 'block';
+  }
+}
+
+// ── SUPABASE HELPERS ──
+async function sbFetch(path, options = {}) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    ...options,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+      ...(options.headers || {})
+    }
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err);
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+// ── GENERATE RANDOM CODE ──
+function randomCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 8; i++) {
+    if (i === 4) code += '-';
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
+// ── GENERATE CODES ──
+async function generateCodes() {
+  const count = parseInt(document.getElementById('gen-count').value);
+  if (!count || count < 1 || count > 500) return;
+
+  const btn = document.getElementById('btn-generate');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+  const msgEl = document.getElementById('gen-msg');
+  msgEl.innerHTML = '';
+
+  try {
+    const rows = Array.from({length: count}, () => ({
+      code: randomCode(),
+      usage_count: 0,
+      max_usage: 3
+    }));
+
+    await sbFetch('book_codes', {
+      method: 'POST',
+      body: JSON.stringify(rows)
+    });
+
+    msgEl.innerHTML = `<div class="msg msg-ok">✓ Berjaya generate ${count} kod baru!</div>`;
+    loadCodes();
+  } catch(e) {
+    msgEl.innerHTML = `<div class="msg msg-err">Error: ${e.message}</div>`;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '✦ Generate';
+}
+
+// ── LOAD CODES ──
+async function loadCodes() {
+  const tbody = document.getElementById('code-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:20px;">Memuatkan...</td></tr>';
+
+  try {
+    const data = await sbFetch('book_codes?select=*&order=created_at.desc');
+
+    const total = data.length;
+    const used = data.filter(d => d.usage_count >= d.max_usage).length;
+    const active = total - used;
+
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-active').textContent = active;
+    document.getElementById('stat-used').textContent = used;
+
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:20px;">Tiada kod lagi. Generate kod baru di atas.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.map((row, i) => {
+      const link = `${CALCULATOR_URL}?code=${row.code}`;
+      const remaining = row.max_usage - row.usage_count;
+      let badge = '';
+      if (remaining <= 0) badge = '<span class="badge-used">Habis</span>';
+      else if (row.usage_count > 0) badge = `<span class="badge-partial">${remaining} baki</span>`;
+      else badge = '<span class="badge-ok">Aktif</span>';
+
+      return `<tr>
+        <td style="color:var(--text-dim)">${i+1}</td>
+        <td><span class="code-text">${row.code}</span></td>
+        <td><span style="font-size:11px;color:var(--text-dim);word-break:break-all">${link}</span></td>
+        <td style="color:var(--text-dim)">${row.usage_count}/${row.max_usage}</td>
+        <td>${badge}</td>
+        <td>
+          <button class="btn btn-outline" style="padding:4px 10px;font-size:11px;" onclick="resetCode('${row.id}')">Reset</button>
+          <button class="btn btn-outline" style="padding:4px 10px;font-size:11px;margin-left:4px;" onclick="showQRSingle('${row.code}')">QR</button>
+        </td>
+      </tr>`;
+    }).join('');
+
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="6" style="color:var(--api);padding:20px;">${e.message}</td></tr>`;
+  }
+}
+
+// ── RESET SINGLE CODE ──
+async function resetCode(id) {
+  try {
+    await sbFetch(`book_codes?id=eq.${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ usage_count: 0 })
+    });
+    loadCodes();
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+// ── SHOW QR SINGLE ──
+function showQRSingle(code) {
+  const link = `${CALCULATOR_URL}?code=${code}`;
+  const win = window.open('', '_blank', 'width=300,height=350');
+  win.document.write(`
+    <html><body style="text-align:center;font-family:sans-serif;padding:20px;background:#fff;">
+    <p style="font-size:12px;color:#666;margin-bottom:8px;">${code}</p>
+    <div id="qr"></div>
+    <p style="font-size:10px;color:#999;margin-top:8px;word-break:break-all">${link}</p>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+    <script>new QRCode(document.getElementById('qr'),{text:'${link}',width:200,height:200});<\/script>
+    </body></html>
+  `);
+}
+
+// ── SHOW ALL QR FOR PRINT ──
+async function showQRAll() {
+  const data = await sbFetch('book_codes?select=code,usage_count,max_usage&order=created_at.asc');
+  const active = data.filter(d => d.usage_count < d.max_usage);
+
+  const grid = document.getElementById('qr-grid');
+  grid.innerHTML = '';
+
+  active.forEach(row => {
+    const link = `${CALCULATOR_URL}?code=${row.code}`;
+    const div = document.createElement('div');
+    div.className = 'qr-item';
+    div.innerHTML = `<div id="qr-${row.code}"></div><div class="qr-code-label">${row.code}</div>`;
+    grid.appendChild(div);
+    setTimeout(() => {
+      new QRCode(document.getElementById(`qr-${row.code}`), {
+        text: link, width: 140, height: 140,
+        colorDark: '#000000', colorLight: '#ffffff'
+      });
+    }, 50);
+  });
+
+  document.getElementById('qr-print-area').style.display = 'block';
+  setTimeout(() => window.print(), 800);
+}
+
+// ── EXPORT CSV ──
+async function exportCSV() {
+  const data = await sbFetch('book_codes?select=*&order=created_at.asc');
+  const rows = [['Kod','Link','Guna','Had','Status']];
+  data.forEach(row => {
+    const link = `${CALCULATOR_URL}?code=${row.code}`;
+    const status = row.usage_count >= row.max_usage ? 'Habis' : 'Aktif';
+    rows.push([row.code, link, row.usage_count, row.max_usage, status]);
+  });
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'metalife-codes.csv';
+  a.click();
+}
+</script>
+</body>
+</html>
